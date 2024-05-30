@@ -7,6 +7,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Principal;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -20,7 +21,7 @@ namespace CaltureDepartment.Data.Repositories
 
         public async Task<IEnumerable<Resident>> GetResidentsAsync() => await _context.Residents.ToListAsync();
 
-        public async Task<Resident> GetResidentAsync(string tz) => await _context.Residents.FindAsync(tz);
+        public async Task<Resident> GetResidentAsync(string identity) => await _context.Residents.FirstOrDefaultAsync(t => t.Identity == identity);
 
         public async Task<Resident> AddResidentAsync(Resident r)
         {
@@ -29,9 +30,9 @@ namespace CaltureDepartment.Data.Repositories
             return r;
         }
 
-        public async Task<Resident> UpdateResidentAsync(string tz, Resident r)
+        public async Task<Resident> UpdateResidentAsync(string identity, Resident r)
         {
-            var resident = _context.Residents.Find(tz);
+            var resident = await _context.Residents.FirstOrDefaultAsync(r => r.Identity == identity);
             if (resident != null)
             {
                 resident.FirstName = r.FirstName;
@@ -41,11 +42,15 @@ namespace CaltureDepartment.Data.Repositories
                 resident.Phone = r.Phone;
             }
             await _context.SaveChangesAsync();
-            return r;
+            return resident;
         }
-        public void DeleteResident(string tz)
+        public void DeleteResident(string identity)
         {
-            _context.Residents.Remove(_context.Residents.Find(tz));
+            var r = _context.Residents.FirstOrDefault(r => r.Identity == identity);
+            if (r != null) {
+                _context.Residents.Remove(r);
+                _context.SaveChanges();
+            }
         }
     }
 }

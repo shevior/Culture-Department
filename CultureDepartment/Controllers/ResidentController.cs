@@ -63,7 +63,7 @@ namespace CultureDepartment.API.Controllers
             var resident = await _residentService.UpdateResidentAsync(tz, _mapper.Map<Resident>(putResident));
             if (resident is null)
                 return NotFound();
-            return Ok(_mapper.Map<EventDto>(_mapper.Map<ResidentDto>(resident)));
+            return Ok(_mapper.Map<ResidentDto>(resident));
         }
 
         // DELETE api/<ResidentController>/5

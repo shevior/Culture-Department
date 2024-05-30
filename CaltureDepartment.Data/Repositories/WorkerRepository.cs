@@ -34,8 +34,17 @@ namespace CaltureDepartment.Data.Repositories
                 worker.IsResident = w.IsResident;
             }
             await _context.SaveChangesAsync();
-            return w;
+            return worker;
         }
-        public void DeleteWorker(int id) => _context.Workers.Remove(_context.Workers.ToList().Find(w => w.Id == id));
+        public void DeleteWorker(int id) 
+        {
+            var w = _context.Workers.ToList().Find(w => w.Id == id);
+            if (w != null) { 
+                _context.Workers.Remove(w);
+                _context.SaveChanges();
+            }
+        }
+
+        public async Task<Worker> GetWorkerAsync(string identity) => await _context.Workers.FirstOrDefaultAsync(w => w.Identity == identity);
     }
 }

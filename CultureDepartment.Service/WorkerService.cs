@@ -19,5 +19,7 @@ namespace CultureDepartment.Service
         public async Task<Worker> AddWorkerAsync(Worker w) => await _workerRepository.AddWorkerAsync(w);
         public async Task<Worker> UpdateWorkerAsync(int id, Worker w) => await _workerRepository.UpdateWorkerAsync(id, w);
         public void DeleteWorker(int id) => _workerRepository.DeleteWorker(id);
+
+        public Task<Worker> GetWorkerAsync(string identity) => _workerRepository.GetWorkerAsync(identity);
     }
 }
