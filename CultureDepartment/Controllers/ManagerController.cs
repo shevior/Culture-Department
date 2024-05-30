@@ -1,29 +1,38 @@
-﻿using CultureDepartment.Entities;
+﻿using AutoMapper;
+using CultureDepartment.Core.Entities;
+using CultureDepartment.Core.Services;
+using CultureDepartment.Data;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
-namespace CultureDepartment.Controllers
+namespace CultureDepartment.API.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("culture.co.il/[controller]")]
+    [Authorize(Roles = "manager")]
     [ApiController]
     public class ManagerController : ControllerBase
     {
-        private static Manager manager =new Manager();
+        private readonly IManagerService _managerService;
+        private readonly IMapper _mapper;
+        public ManagerController(IManagerService managerService, IMapper mapper)
+        {
+            _managerService = managerService;
+            _mapper = mapper;
+        }
+
         // GET: api/<ManagerController>
         [HttpGet]
-        public Manager Get() => manager;
-
-
+        public async Task<IActionResult> Get()
+        {
+            return Ok(await _managerService.GetManagerAsync());
+        }
         // PUT api/<ManagerController>/5
         [HttpPut]
-        public void Put( [FromBody] Manager m)
+        public async Task<IActionResult> Put([FromBody] Manager m)
         {
-            manager.TZ = m.TZ;
-            manager.FirstName = m.FirstName;
-            manager.LastName = m.LastName;
-            manager.IsResident = m.IsResident;
-            manager.Password = m.Password;
+            return Ok(await _managerService.UpdateManegerAsync(m));
         }
     }
 }

@@ -1,60 +1,73 @@
-﻿using CultureDepartment.Entities;
+﻿using AutoMapper;
+using CultureDepartment.API.Models.post;
+using CultureDepartment.API.Models.put;
+using CultureDepartment.Core.DTOs;
+using CultureDepartment.Core.Entities;
+using CultureDepartment.Core.Services;
+using CultureDepartment.Data;
+using CultureDepartment.Service;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Logging;
 using System.Numerics;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
-namespace CultureDepartment.Controllers
+namespace CultureDepartment.API.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("culture.co.il/[controller]")]
+    [Authorize(Roles = "manager,worker")]
     [ApiController]
     public class ResidentController : ControllerBase
     {
-        private static List<Resident> residents = new List<Resident>(){
-            new Resident("326679313"){FirstName="נחמי",LastName="בן מנחם",Age=19, Street="בלז", NumBuilding=13,Phone="035783598" },
-            new Resident("325749315"){FirstName="שבי",LastName="אורנשטיין",Age=19,Street="קוטלר", NumBuilding=12 ,Phone="036198243" }
-        };
+        private readonly IResidentService _residentService;
+        private readonly IMapper _mapper;
+        public ResidentController(IResidentService residentService, IMapper mapper)
+        {
+            _residentService = residentService;
+            _mapper = mapper;
+        }
         // GET: api/<ResidentController>
+        [Authorize(Roles = "manager,worker,resident")]
         [HttpGet]
-        public IEnumerable<Resident> Get(int? age)=> residents.Where(r => age == null || r.Age == age);
-
+        public async Task<IActionResult> Get(int? gender, int? minage, int? maxage)
+        {
+            var residents = await _residentService.GetResidentsAsync((Gender?)gender, minage, maxage);
+            var listDto = residents.Select(r => _mapper.Map<ResidentDto>(r));
+            return Ok(listDto);
+        }
         // GET api/<ResidentController>/5
         [HttpGet("{tz}")]
-        public IActionResult Get(string tz)
+        public async Task<IActionResult> Get(string tz)
         {
-            var r = residents.Find(w => w.TZ.Equals(tz));
-            if (r == null)
+            var resident = await _residentService.GetResidentAsync(tz);
+            var residentDto = _mapper.Map<ResidentDto>(resident);
+            if (residentDto is null)
                 return NotFound();
-            return Ok(r);
+            return Ok(residentDto);
         }
 
         // POST api/<ResidentController>
         [HttpPost]
-        public void Post([FromBody] Resident r)
+        public async Task<IActionResult> Post([FromBody] ResidentPostModel postResident)
         {
-            residents.Add(r);// new Resident() { TZ = r.TZ, FirstName = r.FirstName, LastName = r.LastName, Age = r.Age, Street = r.Street, NumBuilding = r.NumBuilding, Phone = r.Phone });
+            var resident = await _residentService.AddResidentAsync(_mapper.Map<Resident>(postResident));
+            return Ok(_mapper.Map<ResidentDto>(resident));
         }
 
         // PUT api/<ResidentController>/5
         [HttpPut("{tz}")]
-        public IActionResult Put(string tz, [FromBody] Resident r)
+        public async Task<IActionResult> Put(string tz, [FromBody] ResidentPutModel putResident)
         {
-            var resident = residents.Find(e => e.TZ == tz);
-            if (resident != null)
-            {
-                resident.FirstName = r.FirstName;
-                resident.LastName = r.LastName;
-                resident.Age = r.Age;
-                resident.Street = r.Street;
-                resident.NumBuilding = r.NumBuilding;
-                resident.Phone = r.Phone;
-                return Ok();
-            }
-            return NotFound();
+            var resident = await _residentService.UpdateResidentAsync(tz, _mapper.Map<Resident>(putResident));
+            if (resident is null)
+                return NotFound();
+            return Ok(_mapper.Map<EventDto>(_mapper.Map<ResidentDto>(resident)));
         }
 
         // DELETE api/<ResidentController>/5
         [HttpDelete("{tz}")]
-        public void Delete(string tz)=> residents.Remove(residents.Find(r => r.TZ == tz));
+        public void Delete(string tz) => _residentService.DeleteResident(tz);
     }
 }
